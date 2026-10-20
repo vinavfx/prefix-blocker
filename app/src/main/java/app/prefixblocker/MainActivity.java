@@ -2,9 +2,10 @@ package app.prefixblocker;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.role.RoleManager;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -20,7 +21,6 @@ import java.util.Set;
 
 public final class MainActivity extends Activity {
     private PrefixStore store;
-    private RoleManager roles;
     private TextView status;
     private Button activate;
     private Button contacts;
@@ -31,7 +31,6 @@ public final class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         store = new PrefixStore(this);
-        roles = getSystemService(RoleManager.class);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -46,10 +45,18 @@ public final class MainActivity extends Activity {
         status = text("", 15);
         status.setPadding(0, dp(16), 0, dp(4));
         root.addView(status);
-        activate = button("Enable call blocking");
+        activate = button(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                ? "Set as default phone app" : "Enable call blocking");
         activate.setOnClickListener(view -> startActivityForResult(
-                roles.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING), 1));
+                BlockingSetup.activationIntent(this), 1));
         root.addView(activate);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            root.addView(text("Android 9 requires this app to be your default phone app. "
+                    + "It will also show controls for calls that are not blocked.", 14));
+            Button dial = button("Open dial pad");
+            dial.setOnClickListener(view -> startActivity(new Intent(this, DialerActivity.class)));
+            root.addView(dial);
+        }
         contacts = button("Include saved contacts");
         contacts.setOnClickListener(view -> requestPermissions(
                 new String[]{Manifest.permission.READ_CONTACTS}, 2));
@@ -103,8 +110,8 @@ public final class MainActivity extends Activity {
     }
 
     private void refreshStatus() {
-        boolean available = roles != null && roles.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING);
-        boolean enabled = available && roles.isRoleHeld(RoleManager.ROLE_CALL_SCREENING);
+        boolean available = BlockingSetup.isAvailable(this);
+        boolean enabled = available && BlockingSetup.isEnabled(this);
         boolean includesContacts = checkSelfPermission(Manifest.permission.READ_CONTACTS)
                 == PackageManager.PERMISSION_GRANTED;
         status.setText(!available ? "Call blocking is not supported on this device."

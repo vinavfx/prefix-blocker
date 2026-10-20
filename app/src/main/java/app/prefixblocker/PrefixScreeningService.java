@@ -1,15 +1,18 @@
 package app.prefixblocker;
 
 import android.net.Uri;
+import android.os.Build;
 import android.telecom.Call;
 import android.telecom.CallScreeningService;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import java.util.Locale;
 
 public final class PrefixScreeningService extends CallScreeningService {
     @Override
     public void onScreenCall(Call.Details details) {
-        if (details.getCallDirection() != Call.Details.DIRECTION_INCOMING) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                && details.getCallDirection() != Call.Details.DIRECTION_INCOMING) {
             return;
         }
         Uri handle = details.getHandle();
@@ -27,10 +30,10 @@ public final class PrefixScreeningService extends CallScreeningService {
     private String getRegion() {
         TelephonyManager telephony = getSystemService(TelephonyManager.class);
         String country = telephony == null ? "" : telephony.getNetworkCountryIso();
-        if (country.isEmpty() && telephony != null) {
+        if (TextUtils.isEmpty(country) && telephony != null) {
             country = telephony.getSimCountryIso();
         }
-        return (country.isEmpty() ? Locale.getDefault().getCountry() : country)
+        return (TextUtils.isEmpty(country) ? Locale.getDefault().getCountry() : country)
                 .toUpperCase(Locale.ROOT);
     }
 }

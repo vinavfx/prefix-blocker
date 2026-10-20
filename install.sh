@@ -46,8 +46,8 @@ main() {
     require_tools
     serial=$(select_device "${1:-}")
     sdk=$(adb -s "$serial" shell getprop ro.build.version.sdk | tr -d '\r')
-    if [[ ! "$sdk" =~ ^[0-9]+$ ]] || ((sdk < 29)); then
-        printf 'Android 10 or newer is required.\n' >&2
+    if [[ ! "$sdk" =~ ^[0-9]+$ ]] || ((sdk < 28)); then
+        printf 'Android 9 or newer is required.\n' >&2
         exit 1
     fi
 

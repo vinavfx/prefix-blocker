@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" android:maxSdkVersion="28" />
     <uses-feature android:name="android.hardware.telephony" android:required="true" />
 
     <application
@@ -18,6 +20,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".DialerActivity" android:exported="true"
+            android:enabled="@bool/legacy_dialer" android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="tel" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".CallActivity" android:exported="false"
+            android:enabled="@bool/legacy_dialer" android:launchMode="singleTask"
+            android:taskAffinity="app.prefixblocker.calls" android:excludeFromRecents="true" />
+        <service android:name=".LegacyCallService" android:exported="true"
+            android:enabled="@bool/legacy_dialer"
+            android:permission="android.permission.BIND_INCALL_SERVICE">
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="false" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
         <service
             android:name=".PrefixScreeningService"
             android:exported="true"
